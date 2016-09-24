@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [$1 == ""] then;
+if [$1 == ""]; then
   echo "No input specified, please parse a domain, for example:
 
   configure-server.sh example.com
@@ -209,7 +209,7 @@ if [prompt == 'y']; then
   ufw enable
 
 else
-  
+
   ufw allow 'Nginx Full'
   ufw allow ssh
   ufw enable

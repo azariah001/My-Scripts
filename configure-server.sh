@@ -40,62 +40,67 @@ fi
 ## Make sure we have a directory for our letencrypt validation stuff to go in.
 mkdir /var/www/$1
 
-## Write a temporary nginx config just for let's encrypt.
-echo "
-Writing temporary nginx config file for Let's Encrypt Setup $1
-"
-echo "
-server {
-        listen 80;
-        listen [::]:80;
 
-        root /var/www/$1;
-
-        server_name $1 www.$1;
-
-        location / {
-                # First attempt to serve request as file, then
-                # as directory, then fall back to displaying a 404.
-                try_files $uri $uri/ =404;
-        }
-
-        location ~ /.well-known {
-                allow all;
-        }
-}
-" > $1
-
-nginx -t
-
-
-
-if [ ! -e /etc/nginx/sites-enabled/$1 ]; then
+if [ ! -e /etc/letsencrypt/live/$1 ]; then
+  ## Write a temporary nginx config just for let's encrypt.
   echo "
-  Enabled this site is!
+  Writing temporary nginx config file for Let's Encrypt Setup $1
   "
-  ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/$1
+  echo "
+  server {
+          listen 80;
+          listen [::]:80;
+
+          root /var/www/$1;
+
+          server_name $1 www.$1;
+
+          location / {
+                  # First attempt to serve request as file, then
+                  # as directory, then fall back to displaying a 404.
+                  try_files $uri $uri/ =404;
+          }
+
+          location ~ /.well-known {
+                  allow all;
+          }
+  }
+  " > $1
+
+  nginx -t
+
+
+
+  if [ ! -e /etc/nginx/sites-enabled/$1 ]; then
+    echo "
+    Enabled this site is!
+    "
+    ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/$1
+  else
+    echo "
+    Check the backup config, you should! Already enabled this site was!
+    "
+  fi
+
+  echo "
+  Restarting nginx with the new configuration for letsencrypt.
+  "
+  service nginx restart
+
+  ## Setup let's encrypt certs
+  echo "
+  We're now going to setup the letsencrypt certs, if this is the first time letsencrypt has been run on this machine it will prompt you for some input please be sure to fill out your details correctly as they will be needed should you ever need to recover or revoke ssl certs as part of damage mitigation.
+  "
+  letsencrypt certonly -a webroot --webroot-path=/var/www/$1 -d $1 -d $1
+
+  echo "
+  Should you need to backup your ssl certs for this site, or access them for any other reasons, they are located under /etc/letsencrypt/live/$1 You should see the files listed below.
+  "
+  ls -l /etc/letsencrypt/live/$1
 else
-  echo "
-  Check the backup config, you should! Already enabled this site was!
-  "
+  echo "Looks like you've already got letsencrypt certs sorted MasterChief, I'll move straight to configuring nginx for you."
 fi
 
-echo "
-Restarting nginx with the new configuration for letsencrypt.
-"
-service nginx restart
-
-## Setup let's encrypt certs
-echo "
-We're now going to setup the letsencrypt certs, if this is the first time letsencrypt has been run on this machine it will prompt you for some input please be sure to fill out your details correctly as they will be needed should you ever need to recover or revoke ssl certs as part of damage mitigation.
-"
-
-letsencrypt certonly -a webroot --webroot-path=/var/www/$1 -d $1 -d $1
-
-echo "
-Should you need to backup your ssl certs for this site, or access them for any other reasons, they are located under /etc/letsencrypt/live/$1 You should see the files listed below.
-"
-ls -l /etc/letsencrypt/live/$1
 
 mkdir /etc/nginx/snippets
 echo "

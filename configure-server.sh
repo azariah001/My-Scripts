@@ -216,7 +216,7 @@ if [prompt1 == 'y']; then
   ufw allow ssh
   ufw enable
 
-else if [ prompt2 == 'y' ]; then
+elif [ prompt2 == 'y' ]; then
 
   ufw allow 'Nginx Full'
   ufw allow ssh

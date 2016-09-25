@@ -65,7 +65,7 @@ if [ ! -e /etc/letsencrypt/live/$1 ]; then
                   allow all;
           }
   }
-  " > $1
+  " > /etc/nginx/sites-available/$1
 
   nginx -t
 
@@ -193,14 +193,17 @@ server {
 
 
 }
-" > $1
+" > /etc/nginx/sites-available/$1
 
 service nginx restart
 
 echo "
-Would you like to do a first time setup of UFW? [y/n]"
-read prompt
-if [prompt == 'y']; then
+Would you like to do a first time setup of UFW? (y/n)"
+read prompt1
+echo "
+Do you need to configure UFW at all? (y/n)"
+read prompt2
+if [prompt1 == 'y']; then
 
   echo "
   Setting UFW rules to allow for inbound nginx traffic, we're also making sure that OpenSSH is allowed to ensure we don't lock you out of your server because 'Awkward that would be mrrrh?'
@@ -213,17 +216,18 @@ if [prompt == 'y']; then
   ufw allow ssh
   ufw enable
 
-else
+else if [ prompt2 == 'y' ]; then
 
   ufw allow 'Nginx Full'
   ufw allow ssh
   ufw enable
 
+  echo "UFW is now enabled. If you need to configure it further, although we do recommend routing all incoming traffic through nginx, there's a comprehensive guide on UFW available here. https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-14-04"
+
 fi
 
-sudo ufw status
+ufw status
 
-echo "UFW is now enabled. If you need to configure it further, although we do recommend routing all incoming traffic through nginx, there's a comprehensive guide on UFW available here. https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-14-04"
 echo ""
 echo "Now is a good time to acknowledge the good folks over at Digital Ocean for their fantastic guides, the vast majority of the configs used in this script were provided by their guides. If you'd like to read more excellent guides on server configs head over to https://www.digitalocean.com/community/"
 echo ""
@@ -243,3 +247,4 @@ echo "Congratulations your new webserver for $1 has been configured.
 
 May the coffee be with you!
 Exiting"
+exit
